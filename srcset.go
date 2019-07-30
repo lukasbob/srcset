@@ -43,6 +43,20 @@ var (
 	regexFloatingPoint         = regexp.MustCompile(`^-?(?:[0-9]+|[0-9]*\.[0-9]+)(?:[eE][+-]?[0-9]+)?$`)
 )
 
+func isSpace(c rune) bool {
+	switch c {
+	case
+		'\u0020', // space
+		'\u0009', // horizontal tab
+		'\u000A', // new line
+		'\u000C', // form feed
+		'\u000D': // carriage return
+		return true
+	default:
+		return false
+	}
+}
+
 // Parse takes the value of a srcset attribute and parses it.
 func Parse(input string) SourceSet {
 	var (
@@ -63,14 +77,6 @@ func Parse(input string) SourceSet {
 		return ""
 	}
 
-	isSpace := func(c rune) bool {
-		return (c == '\u0020' || // space
-			c == '\u0009' || // horizontal tab
-			c == '\u000A' || // new line
-			c == '\u000C' || // form feed
-			c == '\u000D') // carriage return
-	}
-
 	parseDescriptors := func() {
 		var (
 			isErr = false
@@ -85,7 +91,8 @@ func Parse(input string) SourceSet {
 			intVal, intErr := strconv.ParseInt(numericVal, 10, 64)
 			floatVal, floatErr := strconv.ParseFloat(numericVal, 64)
 
-			if regexNonNegativeInteger.MatchString(numericVal) && lastChar == 'w' {
+			switch {
+			case regexNonNegativeInteger.MatchString(numericVal) && lastChar == 'w':
 				if w != nil || d != nil {
 					isErr = true
 				}
@@ -94,7 +101,7 @@ func Parse(input string) SourceSet {
 				} else {
 					w = &intVal
 				}
-			} else if regexFloatingPoint.MatchString(numericVal) && lastChar == 'x' {
+			case regexFloatingPoint.MatchString(numericVal) && lastChar == 'x':
 				if w != nil || d != nil || h != nil {
 					isErr = true
 				}
@@ -103,7 +110,7 @@ func Parse(input string) SourceSet {
 				} else {
 					d = &floatVal
 				}
-			} else if regexNonNegativeInteger.MatchString(numericVal) && lastChar == 'h' {
+			case regexNonNegativeInteger.MatchString(numericVal) && lastChar == 'h':
 				if h != nil || d != nil {
 					isErr = true
 				}
@@ -112,7 +119,7 @@ func Parse(input string) SourceSet {
 				} else {
 					h = &intVal
 				}
-			} else {
+			default:
 				isErr = true
 			}
 		}
@@ -146,38 +153,40 @@ func Parse(input string) SourceSet {
 
 			switch currState {
 			case stateInDescriptor:
-				if isSpace(c) {
+				switch {
+				case isSpace(c):
 					if currDescriptor != "" {
 						descriptors = append(descriptors, currDescriptor)
 						currDescriptor = ""
 						currState = stateAfterDescriptor
 					}
-				} else if c == comma {
+				case c == comma:
 					pos++
 					if currDescriptor != "" {
 						descriptors = append(descriptors, currDescriptor)
 						parseDescriptors()
 						return
 					}
-				} else if c == leftParens {
+				case c == leftParens:
 					currDescriptor += string(c)
 					currState = stateInParens
-				} else {
+				default:
 					currDescriptor += string(c)
 				}
 
 			case stateInParens:
-				if c == rightParens {
+				switch c {
+				case rightParens:
 					currDescriptor += string(c)
 					currState = stateInDescriptor
-				} else {
+				default:
 					currDescriptor += string(c)
 				}
 
 			case stateAfterDescriptor:
-				if isSpace(c) {
-
-				} else {
+				switch {
+				case isSpace(c):
+				default:
 					currState = stateInDescriptor
 					pos--
 				}
