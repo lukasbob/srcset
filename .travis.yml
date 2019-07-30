@@ -2,8 +2,8 @@ language: go
 
 matrix:
   include:
-    - go: "1.10.x"
     - go: "1.11.x"
+    - go: "1.12.x"
       install: true
 
 env:
