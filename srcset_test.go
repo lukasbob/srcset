@@ -33,10 +33,10 @@ func Test_parse(t *testing.T) {
 			name: "Parse URL & density",
 			args: args{"image-1x.png 1x, image-2x.png 2x, image-3x.png 3x, image-4x.png 4x"},
 			want: SourceSet{
-				ImageSource{URL: "image-1x.png", Density: fl(1)},
-				ImageSource{URL: "image-2x.png", Density: fl(2)},
-				ImageSource{URL: "image-3x.png", Density: fl(3)},
-				ImageSource{URL: "image-4x.png", Density: fl(4)},
+				ImageSource{URL: "image-1x.png", Density: fl(1), Offset: 0},
+				ImageSource{URL: "image-2x.png", Density: fl(2), Offset: 17},
+				ImageSource{URL: "image-3x.png", Density: fl(3), Offset: 34},
+				ImageSource{URL: "image-4x.png", Density: fl(4), Offset: 51},
 			},
 		},
 		{
@@ -45,9 +45,9 @@ func Test_parse(t *testing.T) {
 			            elva-fairy-480w.jpg 480w,
 			            elva-fairy-800w.jpg 800w`},
 			want: SourceSet{
-				ImageSource{URL: "elva-fairy-320w.jpg", Width: i(320)},
-				ImageSource{URL: "elva-fairy-480w.jpg", Width: i(480)},
-				ImageSource{URL: "elva-fairy-800w.jpg", Width: i(800)},
+				ImageSource{URL: "elva-fairy-320w.jpg", Width: i(320), Offset: 0},
+				ImageSource{URL: "elva-fairy-480w.jpg", Width: i(480), Offset: 41},
+				ImageSource{URL: "elva-fairy-800w.jpg", Width: i(800), Offset: 82},
 			},
 		},
 		{
@@ -56,9 +56,9 @@ func Test_parse(t *testing.T) {
 			            elva-fairy-480h.jpg 480h,
 			            elva-fairy-800h.jpg 800h`},
 			want: SourceSet{
-				ImageSource{URL: "elva-fairy-320h.jpg", Height: i(320)},
-				ImageSource{URL: "elva-fairy-480h.jpg", Height: i(480)},
-				ImageSource{URL: "elva-fairy-800h.jpg", Height: i(800)},
+				ImageSource{URL: "elva-fairy-320h.jpg", Height: i(320), Offset: 0},
+				ImageSource{URL: "elva-fairy-480h.jpg", Height: i(480), Offset: 41},
+				ImageSource{URL: "elva-fairy-800h.jpg", Height: i(800), Offset: 82},
 			},
 		},
 		{
@@ -111,14 +111,16 @@ func Test_parse(t *testing.T) {
 			name: "Super funky",
 			args: args{"data:,a ( , data:,b 1x, ), data:,c"},
 			want: SourceSet{
-				ImageSource{URL: "data:,c"},
+				ImageSource{URL: "data:,c", Offset: 27},
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		if got := Parse(tt.args.input); !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("%q. Parse() = %v, want %v", tt.name, got, tt.want)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Parse(tt.args.input); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("%q. Parse() = %v, want %v", tt.name, got, tt.want)
+			}
+		})
 	}
 }

@@ -15,6 +15,7 @@ type ImageSource struct {
 	Width   *int64
 	Height  *int64
 	Density *float64
+	Offset  int
 }
 
 // SourceSet is the result of parsing the value of a srcset attribute.
@@ -61,6 +62,7 @@ func isSpace(c rune) bool {
 func Parse(input string) SourceSet {
 	var (
 		url         string
+		urlPos      = 0
 		pos         = 0
 		currState   = stateNone
 		end         = len(input)
@@ -68,13 +70,13 @@ func Parse(input string) SourceSet {
 		descriptors = []string{}
 	)
 
-	collectChars := func(rx *regexp.Regexp) string {
+	collectChars := func(rx *regexp.Regexp) (string, int) {
 		if match := rx.FindString(input[pos:]); match != "" {
 			pos += len(match)
-			return match
+			return match, pos - len(match)
 		}
 
-		return ""
+		return "", pos
 	}
 
 	parseDescriptors := func() {
@@ -127,6 +129,7 @@ func Parse(input string) SourceSet {
 		if !isErr {
 			candidates = append(candidates, ImageSource{
 				URL:     url,
+				Offset:  urlPos,
 				Density: d,
 				Width:   w,
 				Height:  h,
@@ -202,7 +205,7 @@ func Parse(input string) SourceSet {
 			return candidates
 		}
 
-		url = collectChars(regexLeadingNotSpaces)
+		url, urlPos = collectChars(regexLeadingNotSpaces)
 		descriptors = []string{}
 
 		if url[len(url)-1] == ',' {
